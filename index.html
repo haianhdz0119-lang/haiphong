@@ -1,0 +1,160 @@
+Frontend (HTML/CSS/JS)
+        │
+        ▼
+Backend (Python Flask)
+        │
+        ▼
+Sinh plist (.mobileconfig)
+        │
+        ▼
+Người dùng tải xuống
+mobileconfig-generator/
+├── app.py
+├── templates/
+│   └── index.html
+├── static/
+│   └── style.css
+└── requirements.txt
+Flask==3.0.3
+from flask import Flask, render_template, request, send_file
+import plistlib
+import uuid
+import io
+
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/generate", methods=["POST"])
+def generate():
+
+    profile_name = request.form["name"]
+    organization = request.form["organization"]
+    dns = request.form["dns"]
+
+    profile = {
+        "PayloadType": "Configuration",
+        "PayloadVersion": 1,
+        "PayloadIdentifier": "com.example.mobileconfig",
+        "PayloadUUID": str(uuid.uuid4()).upper(),
+        "PayloadDisplayName": profile_name,
+        "PayloadOrganization": organization,
+        "PayloadRemovalDisallowed": False,
+        "PayloadContent": [
+            {
+                "PayloadType": "com.apple.dnsSettings.managed",
+                "PayloadVersion": 1,
+                "PayloadIdentifier": "com.example.dns",
+                "PayloadUUID": str(uuid.uuid4()).upper(),
+                "DNSSettings": {
+                    "DNSProtocol": "HTTPS",
+                    "ServerURL": dns
+                }
+            }
+        ]
+    }
+
+    output = io.BytesIO()
+    plistlib.dump(profile, output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="Profile.mobileconfig",
+        mimetype="application/x-apple-aspen-config"
+    )
+
+if __name__ == "__main__":
+    app.run(debug=True)
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>iPhone MobileConfig Generator</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>MobileConfig Generator</h2>
+
+<form action="/generate" method="post">
+
+<label>Tên cấu hình</label>
+
+<input
+type="text"
+name="name"
+value="My Profile"
+required>
+
+<label>Organization</label>
+
+<input
+type="text"
+name="organization"
+value="My Company"
+required>
+
+<label>DNS Server URL</label>
+
+<input
+type="text"
+name="dns"
+placeholder="https://dns.google/dns-query"
+required>
+
+<button>Tạo file .mobileconfig</button>
+
+</form>
+
+</div>
+
+</body>
+</html>body{
+font-family:Arial;
+background:#f2f2f2;
+}
+
+.box{
+
+width:420px;
+margin:50px auto;
+
+background:white;
+
+padding:30px;
+
+border-radius:15px;
+
+box-shadow:0 0 20px rgba(0,0,0,.1);
+
+}
+
+input{
+
+width:100%;
+
+padding:10px;
+
+margin-top:5px;
+
+margin-bottom:15px;
+
+}
+
+button{
+
+width:100%;
+
+padding:12px;
+
+cursor:pointer;
+
+}pip install -r requirements.txt
+python app.pyhttp://127.0.0.1:5000
